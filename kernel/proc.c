@@ -131,7 +131,7 @@ found:
     release(&p->lock);
     return 0;
   }
-
+  
   if((p -> dup_trapframe = (struct trapframe *)kalloc()) == 0){
     release(&p->lock);
     return 0;
@@ -166,6 +166,8 @@ freeproc(struct proc *p)
 {
   if(p->trapframe)
     kfree((void*)p->trapframe);
+  if(p -> dup_trapframe)
+    kfree((void *) p -> dup_trapframe);
   p->trapframe = 0;
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
@@ -691,4 +693,17 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+uint64 sys_sigalarm(void){
+  int tick;
+  if(argint(0, &tick) < 0)
+    return -1;
+  uint64 handler;
+  if(argaddr(1, &handler) < 0)
+    return -1;
+  myproc()-> is_sigalarm =0;
+  myproc()-> tick = tick;
+  myproc()-> curr_tick = 0;
+  myproc()-> handler = handler;
+  return 0; 
 }

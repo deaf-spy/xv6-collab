@@ -97,3 +97,23 @@ sys_trace(void)
     return -1;
   return 0;
 }
+
+uint64
+sys_sigreturn(void)
+{
+  restore();
+  myproc() -> is_sigalarm = 0;
+  return myproc() -> trapframe -> a0;
+}
+
+void
+restore()
+{
+  struct proc * p = myproc();
+  p -> dup_trapframe -> kernel_satp = p -> trapframe -> kernel_satp;
+  p -> dup_trapframe -> kernel_hartid = p -> trapframe -> kernel_hartid;
+  p -> dup_trapframe -> kernel_sp = p -> trapframe -> kernel_sp;
+  p -> dup_trapframe -> kernel_trap = p -> trapframe -> kernel_trap;
+  * (p -> trapframe) = * (p -> dup_trapframe);
+  return;
+}

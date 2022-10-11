@@ -106,4 +106,11 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   int mask;
+  int is_sigalarm;
+  uint64 handler;
+  int tick;
+  int curr_tick;
+  struct trapframe *dup_trapframe;
 };
+
+void restore();
