@@ -132,6 +132,15 @@ found:
     return 0;
   }
 
+  if((p -> dup_trapframe = (struct trapframe *)kalloc()) == 0){
+    release(&p->lock);
+    return 0;
+  }
+  p -> tick = 0;
+  p -> is_sigalarm = 0;
+  p -> handler = 0;
+  p -> curr_tick = 0;
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
