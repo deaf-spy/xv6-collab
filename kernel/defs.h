@@ -63,7 +63,12 @@ void            ramdiskrw(struct buf*);
 // kalloc.c
 void*           kalloc(void);
 void            kfree(void *);
+void            freerange(void *, void *);
 void            kinit(void);
+int             get_page_ref(void *);
+void            inc_page_ref(void *);
+void            dec_page_ref(void *);
+void            init_page_ref();
 
 // log.c
 void            initlog(int, struct superblock*);
@@ -148,6 +153,7 @@ void            trapinit(void);
 void            trapinithart(void);
 extern struct spinlock tickslock;
 void            usertrapret(void);
+int             page_fault_handler(void *, pagetable_t);
 
 // uart.c
 void            uartinit(void);
@@ -162,7 +168,7 @@ void            kvminithart(void);
 void            kvmmap(pagetable_t, uint64, uint64, uint64, int);
 int             mappages(pagetable_t, uint64, uint64, uint64, int);
 pagetable_t     uvmcreate(void);
-void            uvmfirst(pagetable_t, uchar *, uint);
+void            uvminit(pagetable_t, uchar *, uint);
 uint64          uvmalloc(pagetable_t, uint64, uint64, int);
 uint64          uvmdealloc(pagetable_t, uint64, uint64);
 int             uvmcopy(pagetable_t, pagetable_t, uint64);
