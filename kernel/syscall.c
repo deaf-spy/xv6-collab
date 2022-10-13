@@ -106,6 +106,10 @@ extern uint64 sys_close(void);
 extern uint64 sys_trace(void);
 extern uint64 sys_sigalarm(void);
 extern uint64 sys_sigreturn(void);
+extern uint64 sys_waitx(void);
+extern uint64 sys_set_priority(void);
+extern uint64 sys_settickets(void);
+
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -134,34 +138,40 @@ static uint64 (*syscalls[])(void) = {
 [SYS_trace]   sys_trace,
 [SYS_sigalarm] sys_sigalarm,
 [SYS_sigreturn] sys_sigreturn,
+[SYS_waitx]   sys_waitx,
+[SYS_set_priority]  sys_set_priority,
+[SYS_settickets]  sys_settickets,
 };
 
 // An array mapping syscall numbers to their names
 char *syscallnames[] = {
-  [SYS_fork]    "fork",
-  [SYS_exit]    "exit",
-  [SYS_wait]    "wait",
-  [SYS_pipe]    "pipe",
-  [SYS_read]    "read",
-  [SYS_kill]    "kill",
-  [SYS_exec]    "exec",
-  [SYS_fstat]   "fstat",
-  [SYS_chdir]   "chdir",
-  [SYS_dup]     "dup",
-  [SYS_getpid]  "getpid",
-  [SYS_sbrk]    "sbrk",
-  [SYS_sleep]   "sleep",
-  [SYS_uptime]  "uptime",
-  [SYS_open]    "open",
-  [SYS_write]   "write",
-  [SYS_mknod]   "mknod",
-  [SYS_unlink]  "unlink",
-  [SYS_link]    "link",
-  [SYS_mkdir]   "mkdir",
-  [SYS_close]   "close",
-  [SYS_trace]   "trace",
-  [SYS_sigalarm] "sigalarm",
-  [SYS_sigreturn] "sigreturn",
+    [SYS_fork] "fork",
+    [SYS_exit] "exit",
+    [SYS_wait] "wait",
+    [SYS_pipe] "pipe",
+    [SYS_read] "read",
+    [SYS_kill] "kill",
+    [SYS_exec] "exec",
+    [SYS_fstat] "fstat",
+    [SYS_chdir] "chdir",
+    [SYS_dup] "dup",
+    [SYS_getpid] "getpid",
+    [SYS_sbrk] "sbrk",
+    [SYS_sleep] "sleep",
+    [SYS_uptime] "uptime",
+    [SYS_open] "open",
+    [SYS_write] "write",
+    [SYS_mknod] "mknod",
+    [SYS_unlink] "unlink",
+    [SYS_link] "link",
+    [SYS_mkdir] "mkdir",
+    [SYS_close] "close",
+    [SYS_trace] "trace",
+    [SYS_sigalarm] "sigalarm",
+    [SYS_sigreturn] "sigreturn",
+    [SYS_waitx] "waitx",
+    [SYS_set_priority] "set_priority",
+    [SYS_settickets] "settickets",
 };
 
 // An array mapping syscall numbers to their number of arguements
@@ -188,6 +198,11 @@ int syscall_argc[] = {
     [SYS_mkdir] 2,
     [SYS_close] 1,
     [SYS_trace] 1,
+    [SYS_sigreturn] 0,
+    [SYS_sigalarm] 2,
+    [SYS_waitx] 3,
+    [SYS_set_priority] 2,
+    [SYS_settickets] 1,
 };
 
 void

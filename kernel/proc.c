@@ -480,41 +480,38 @@ int proc_priority(const struct proc *process)
   return MAX(0, MIN(process->priority - niceness + 5, 100));
 }
 
-int set_priority(int new_static_priority, int proc_pid)
+int set_priority(int new_priority, int pid)
 {
   struct proc *p;
-  int old_static_priority = -1;
-  if (new_static_priority < 0 || new_static_priority > 100)
+  int oldPriority = -1;
+  if (new_priority < 0 || new_priority > 100)
   {
-    printf("<new_static_priority> should be in range [0 - 100]\n");
+    printf("<new_priority> should be in range [0 - 100]\n");
     return -1;
   }
-  int found = 0;
+
   for (p = proc; p < &proc[NPROC]; p++)
   {
     acquire(&p->lock);
-    if (p->pid == proc_pid)
+    if (p->pid == pid)
     {
-      found = 1;
-      old_static_priority = p->priority;
-      p->priority = new_static_priority;
+      oldPriority = p->priority;
+      p->priority = new_priority;
+      p->lastRun = 0;
+      p->lastSleep = 0;
+      release(&p->lock);
+      if (oldPriority > new_priority)
+#ifdef PBS
+        yield();
+#else
+        ;
+#endif
       break;
     }
     release(&p->lock);
   }
-  if (found)
-  {
-    p->lastRun = 0;
-    p->lastSleep = 0;
-    release(&p->lock);
-    if (old_static_priority > new_static_priority)
-#ifdef PBS
-      yield();
-#else
-      ;
-#endif
-  }
-  return old_static_priority;
+
+  return oldPriority;
 }
 
 // Per-CPU process scheduler.
@@ -530,17 +527,12 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  // scheduler goes over an infinite loop ,
-  for (;;)
+
+  for (;;) // Infinite Scheduling
   {
-    // Avoid deadlock by ensuring that devices can interrupt.
-    intr_on();
+    intr_on(); // Interrupt enabled
 #ifdef RR
-    if (flag)
-    {
-      printf("RR\n");
-      flag = 0;
-    }
+    
     for (p = proc; p < &proc[NPROC]; p++)
     {
       // printf("RR\n");
@@ -574,7 +566,7 @@ scheduler(void)
           first_come_proc = p;
           continue;
         }
-        if (first_come_proc->creation_time > p->creation_time)
+        if (first_come_proc->createTime > p->createTime)
         {
           // release the lock for the process that was chosen earlier
           release(&first_come_proc->lock);
@@ -601,8 +593,8 @@ scheduler(void)
     // #endif
 #else
 #ifdef PBS
-    struct proc *pbs_proc = NULL;
-    uint pbs_priority = 101;
+    struct proc *cur_proc = NULL;
+    uint cur_priority = 101;
     // assume for a process we've 3 parameters
     // 1. it's creation time
     // 2. it's running time , adding up from the last time it was scheduled
@@ -614,58 +606,42 @@ scheduler(void)
       acquire(&p->lock);
       if (p->state == RUNNABLE)
       {
-        int temp_priority = proc_priority(p);
+        int p_priority = proc_priority(p);
         // if no proc is chosen , choose one
-        if (pbs_proc == NULL)
+        if (cur_proc == NULL)
         {
-          pbs_proc = p;
-          pbs_priority = temp_priority;
-          continue;
+          cur_proc = p;
+          cur_priority = p_priority;
         }
-        else if (pbs_priority > temp_priority)
+        else if ((p_priority < cur_priority) || ((p_priority == cur_priority) && ((p->numRuns < cur_proc->numRuns) ||
+        (p->numRuns == cur_proc->numRuns && p->createTime < cur_proc->createTime))))
         {
-          // have some process in pbs_proc, release the lock
-          release(&pbs_proc->lock);
-          pbs_proc = p;
-          pbs_priority = temp_priority;
-          continue;
-        }
-        else if (pbs_priority == temp_priority && pbs_proc->num_run > p->num_run)
-        {
-          // choose the process that has been scheduled for less number of times
-          release(&pbs_proc->lock);
-          pbs_proc = p;
-          pbs_priority = temp_priority;
-          continue;
-        }
-        else if (pbs_priority == temp_priority && pbs_proc->num_run == p->num_run && pbs_proc->creation_time > p->creation_time)
-        {
-          // apply FCFS to break the tie.
-          release(&pbs_proc->lock);
-          pbs_proc = p;
-          pbs_priority = temp_priority;
-          continue;
+          release(&cur_proc->lock); // contains the process
+          cur_proc = p;
+          cur_priority = p_priority;
         }
       }
       release(&p->lock);
     }
-    if (pbs_proc == NULL)
-      continue; // nothing to release
-    // else we got the process to run now , run it
-    pbs_proc->state = RUNNING;
-    // increase the number of runs for the current process
-    pbs_proc->num_run += 1;
-    pbs_proc->ticks_last_scheduled = ticks;
-    pbs_proc->last_run = 0;
-    pbs_proc->last_sleep = 0;
-    c->proc = pbs_proc;
-    swtch(&c->context, &pbs_proc->context);
-    // Process is done running for now.
-    // It should have changed its p->state before coming back.
-    c->proc = 0;
-    release(&pbs_proc->lock);
+    if (cur_proc != NULL) {
+      cur_proc->state = RUNNING;
+
+      cur_proc->lastRun = 0;
+      cur_proc->lastSleep = 0;
+
+      cur_proc->numRuns++;
+      cur_proc->ticksSinceLast = ticks;
+      c->proc = cur_proc;
+
+      swtch(&c->context, &cur_proc->context);
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+      release(&cur_proc->lock);
+    }
 #else
 #ifdef MLFQ
+
 #endif
 #endif
 #endif

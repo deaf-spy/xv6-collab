@@ -87,7 +87,9 @@ usertrap(void)
       * (p -> dup_trapframe) = * (p -> trapframe);
       p -> trapframe -> epc = p -> handler;
     }
+ #ifndef FCFS
     yield();
+    #endif
   }
 
 
