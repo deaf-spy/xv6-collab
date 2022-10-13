@@ -71,6 +71,10 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
+ifndef SCHEDULER 
+SCHEDULER:=RR
+endif
+CFLAGS+="-D$(SCHEDULER)"
 LDFLAGS = -z max-page-size=4096
 
 $K/kernel: $(OBJS) $K/kernel.ld $U/initcode
@@ -134,6 +138,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_strace\
 	$U/_alarmtest\
+	$U/_schedulertest\
 	$U/_cowtest\
 
 fs.img: mkfs/mkfs README $(UPROGS)
