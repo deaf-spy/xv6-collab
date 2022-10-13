@@ -1,5 +1,4 @@
-#include "kernel/types.h"
-
+typedef unsigned int uint;
 struct stat;
 
 // system calls
@@ -27,12 +26,9 @@ int uptime(void);
 int trace(int);
 int sigalarm(int, void (*handler)());
 int sigreturn(void);
-int waitx(uint64, uint*, uint*);
-int set_priority(int, int);
-int settickets(int)
 
 // ulib.c
-int stat(const char *, struct stat *);
+int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);

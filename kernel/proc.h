@@ -111,20 +111,6 @@ struct proc {
   int tick;
   int curr_tick;
   struct trapframe *dup_trapframe;
-
-  // FCFS
-  uint64 createTime;
-  uint64 endTime;
-  uint64 runTime;
-
-  // PBS
-  uint64 priority;
-
-  uint64 numRuns;
-  uint64 ticksSinceLast;
-  uint64 lastRun;
-  uint64 lastSleep;
-
 };
 
 void restore();

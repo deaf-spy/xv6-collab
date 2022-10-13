@@ -120,20 +120,8 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  
-  if(which_dev == 2){
-    p -> curr_tick += 1;
-    if(p->tick > 0 && p -> curr_tick >= p -> tick && !p -> is_sigalarm){
-      p -> curr_tick = 0;
-      p -> is_sigalarm = 1;
-      * (p -> dup_trapframe) = * (p -> trapframe);
-      p -> trapframe -> epc = p -> handler;
-    }
- #ifndef FCFS
+  if(which_dev == 2)
     yield();
-    #endif
-  }
-
 
   usertrapret();
 }
